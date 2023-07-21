@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"unicode"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 // Parsing block-level elements.
@@ -118,11 +119,11 @@ func (p *Parser) Block(data []byte) {
 		// attributes that can be specific before a block element:
 		//
 		// {#id .class1 .class2 key="value"}
-		if p.extensions&Attributes != 0 {
+		if p.extensions&ext.Attributes != 0 {
 			data = p.attribute(data)
 		}
 
-		if p.extensions&Includes != 0 {
+		if p.extensions&ext.Includes != 0 {
 			f := p.readInclude
 			path, address, consumed := p.isInclude(data)
 			if consumed == 0 {
@@ -203,7 +204,7 @@ func (p *Parser) Block(data []byte) {
 		// % stuff
 		// % more stuff
 		// % even more stuff
-		if p.extensions&Titleblock != 0 {
+		if p.extensions&ext.Titleblock != 0 {
 			if data[0] == '%' {
 				if i := p.titleBlock(data, true); i > 0 {
 					data = data[i:]
@@ -241,7 +242,7 @@ func (p *Parser) Block(data []byte) {
 		//     return n * fact(n-1)
 		// }
 		// ```
-		if p.extensions&FencedCode != 0 {
+		if p.extensions&ext.FencedCode != 0 {
 			if i := p.fencedCodeBlock(data, true); i > 0 {
 				data = data[i:]
 				continue
@@ -277,7 +278,7 @@ func (p *Parser) Block(data []byte) {
 		//
 		// A> The proof is too large to fit
 		// A> in the margin.
-		if p.extensions&Mmark != 0 {
+		if p.extensions&ext.Mmark != 0 {
 			if p.asidePrefix(data) > 0 {
 				data = data[p.aside(data):]
 				continue
@@ -290,14 +291,14 @@ func (p *Parser) Block(data []byte) {
 		// ![Alt Text](img.jpg "This is an image")
 		// ![Alt Text](img2.jpg "This is a second image")
 		// !---
-		if p.extensions&Mmark != 0 {
+		if p.extensions&ext.Mmark != 0 {
 			if i := p.figureBlock(data, true); i > 0 {
 				data = data[i:]
 				continue
 			}
 		}
 
-		if p.extensions&Tables != 0 {
+		if p.extensions&ext.Tables != 0 {
 			if i := p.table(data); i > 0 {
 				data = data[i:]
 				continue
@@ -323,7 +324,7 @@ func (p *Parser) Block(data []byte) {
 			start := 0
 			delim := byte('.')
 			if i > 2 {
-				if p.extensions&OrderedListStart != 0 {
+				if p.extensions&ext.OrderedListStart != 0 {
 					s := string(data[:i-2])
 					start, _ = strconv.Atoi(s)
 					if start == 1 {
@@ -344,14 +345,14 @@ func (p *Parser) Block(data []byte) {
 		//
 		// Term 2
 		// :   Definition c
-		if p.extensions&DefinitionLists != 0 {
+		if p.extensions&ext.DefinitionLists != 0 {
 			if p.dliPrefix(data) > 0 {
 				data = data[p.list(data, ast.ListTypeDefinition, 0, '.'):]
 				continue
 			}
 		}
 
-		if p.extensions&MathJax != 0 {
+		if p.extensions&ext.MathJax != 0 {
 			if i := p.blockMath(data); i > 0 {
 				data = data[i:]
 				continue
@@ -361,7 +362,7 @@ func (p *Parser) Block(data []byte) {
 		// document matters:
 		//
 		// {frontmatter}/{mainmatter}/{backmatter}
-		if p.extensions&Mmark != 0 {
+		if p.extensions&ext.Mmark != 0 {
 			if i := p.documentMatter(data); i > 0 {
 				data = data[i:]
 				continue
@@ -397,7 +398,7 @@ func (p *Parser) isPrefixHeading(data []byte) bool {
 		return false
 	}
 
-	if p.extensions&SpaceHeadings != 0 {
+	if p.extensions&ext.SpaceHeadings != 0 {
 		level := skipCharN(data, 0, '#', 6)
 		if level == len(data) || data[level] != ' ' {
 			return false
@@ -412,7 +413,7 @@ func (p *Parser) prefixHeading(data []byte) int {
 	end := skipUntilChar(data, i, '\n')
 	skip := end
 	id := ""
-	if p.extensions&HeadingIDs != 0 {
+	if p.extensions&ext.HeadingIDs != 0 {
 		j, k := 0, 0
 		// find start/end of heading id
 		for j = i; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
@@ -443,7 +444,7 @@ func (p *Parser) prefixHeading(data []byte) int {
 			HeadingID: id,
 			Level:     level,
 		}
-		if id == "" && p.extensions&AutoHeadingIDs != 0 {
+		if id == "" && p.extensions&ext.AutoHeadingIDs != 0 {
 			block.HeadingID = sanitizeHeadingID(string(data[i:end]))
 			p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
 		}
@@ -454,7 +455,7 @@ func (p *Parser) prefixHeading(data []byte) int {
 }
 
 func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
-	if p.extensions|Mmark == 0 {
+	if p.extensions|ext.Mmark == 0 {
 		return false
 	}
 	if len(data) < 4 {
@@ -470,7 +471,7 @@ func (p *Parser) isPrefixSpecialHeading(data []byte) bool {
 		return false
 	}
 
-	if p.extensions&SpaceHeadings != 0 {
+	if p.extensions&ext.SpaceHeadings != 0 {
 		if data[2] != ' ' {
 			return false
 		}
@@ -483,7 +484,7 @@ func (p *Parser) prefixSpecialHeading(data []byte) int {
 	end := skipUntilChar(data, i, '\n')
 	skip := end
 	id := ""
-	if p.extensions&HeadingIDs != 0 {
+	if p.extensions&ext.HeadingIDs != 0 {
 		j, k := 0, 0
 		// find start/end of heading id
 		for j = i; j < end-1 && (data[j] != '{' || data[j+1] != '#'); j++ {
@@ -515,7 +516,7 @@ func (p *Parser) prefixSpecialHeading(data []byte) int {
 			IsSpecial: true,
 			Level:     1, // always level 1.
 		}
-		if id == "" && p.extensions&AutoHeadingIDs != 0 {
+		if id == "" && p.extensions&ext.AutoHeadingIDs != 0 {
 			block.HeadingID = sanitizeHeadingID(string(data[i:end]))
 			p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
 		}
@@ -763,7 +764,7 @@ func (p *Parser) htmlFindEnd(tag string, data []byte) int {
 		return i
 	}
 
-	if p.extensions&LaxHTMLBlocks != 0 {
+	if p.extensions&ext.LaxHTMLBlocks != 0 {
 		return i
 	}
 	if skip = IsEmpty(data[i:]); skip == 0 {
@@ -975,7 +976,7 @@ func (p *Parser) fencedCodeBlock(data []byte, doRender bool) int {
 		}
 		codeBlock.Content = work.Bytes() // TODO: get rid of temp buffer
 
-		if p.extensions&Mmark == 0 {
+		if p.extensions&ext.Mmark == 0 {
 			p.AddBlock(codeBlock)
 			finalizeCodeBlock(codeBlock)
 			return beg
@@ -1074,7 +1075,7 @@ func (p *Parser) quote(data []byte) int {
 		// fenced code and if one's found, incorporate it altogether,
 		// irregardless of any contents inside it
 		for end < len(data) && data[end] != '\n' {
-			if p.extensions&FencedCode != 0 {
+			if p.extensions&ext.FencedCode != 0 {
 				if i := p.fencedCodeBlock(data[end:], false); i > 0 {
 					// -1 to compensate for the extra end++ after the loop:
 					end += i - 1
@@ -1095,7 +1096,7 @@ func (p *Parser) quote(data []byte) int {
 		beg = end
 	}
 
-	if p.extensions&Mmark == 0 {
+	if p.extensions&ext.Mmark == 0 {
 		block := p.AddBlock(&ast.BlockQuote{})
 		p.Block(raw.Bytes())
 		p.Finalize(block)
@@ -1440,7 +1441,7 @@ gatherlines:
 
 		// If there is a fence line (marking starting of a code block)
 		// without indent do not process it as part of the list.
-		if p.extensions&FencedCode != 0 {
+		if p.extensions&ext.FencedCode != 0 {
 			fenceLineEnd, _ := isFenceLine(chunk, nil, "")
 			if fenceLineEnd > 0 && indent == 0 {
 				*flags |= ast.ListItemEndOfList
@@ -1623,7 +1624,7 @@ func (p *Parser) paragraph(data []byte) int {
 	// i: index of cursor/end of current line
 	var prev, line, i int
 	tabSize := tabSizeDefault
-	if p.extensions&TabSizeEight != 0 {
+	if p.extensions&ext.TabSizeEight != 0 {
 		tabSize = tabSizeDouble
 	}
 	// keep going until we find something to mark the end of the paragraph
@@ -1644,7 +1645,7 @@ func (p *Parser) paragraph(data []byte) int {
 		// did we find a blank line marking the end of the paragraph?
 		if n := IsEmpty(current); n > 0 {
 			// did this blank line followed by a definition list item?
-			if p.extensions&DefinitionLists != 0 {
+			if p.extensions&ext.DefinitionLists != 0 {
 				if i < len(data)-1 && data[i+1] == ':' {
 					listLen := p.list(data[prev:], ast.ListTypeDefinition, 0, '.')
 					return prev + listLen
@@ -1673,7 +1674,7 @@ func (p *Parser) paragraph(data []byte) int {
 				block := &ast.Heading{
 					Level: level,
 				}
-				if p.extensions&AutoHeadingIDs != 0 {
+				if p.extensions&ext.AutoHeadingIDs != 0 {
 					block.HeadingID = sanitizeHeadingID(string(data[prev:eol]))
 					p.allHeadingsWithAutoID = append(p.allHeadingsWithAutoID, block)
 				}
@@ -1687,7 +1688,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if the next line starts a block of HTML, then the paragraph ends here
-		if p.extensions&LaxHTMLBlocks != 0 {
+		if p.extensions&ext.LaxHTMLBlocks != 0 {
 			if data[i] == '<' && p.html(current, false) > 0 {
 				// rewind to before the HTML block
 				p.renderParagraph(data[:i])
@@ -1708,7 +1709,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if there's a fenced code block, paragraph is over
-		if p.extensions&FencedCode != 0 {
+		if p.extensions&ext.FencedCode != 0 {
 			if p.fencedCodeBlock(current, false) > 0 {
 				p.renderParagraph(data[:i])
 				return i
@@ -1716,7 +1717,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if there's a figure block, paragraph is over
-		if p.extensions&Mmark != 0 {
+		if p.extensions&ext.Mmark != 0 {
 			if p.figureBlock(current, false) > 0 {
 				p.renderParagraph(data[:i])
 				return i
@@ -1724,7 +1725,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if there's a table, paragraph is over
-		if p.extensions&Tables != 0 {
+		if p.extensions&ext.Tables != 0 {
 			if j, _, _ := p.tableHeader(current, false); j > 0 {
 				p.renderParagraph(data[:i])
 				return i
@@ -1732,7 +1733,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if there's a definition list item, prev line is a definition term
-		if p.extensions&DefinitionLists != 0 {
+		if p.extensions&ext.DefinitionLists != 0 {
 			if p.dliPrefix(current) != 0 {
 				ret := p.list(data[prev:], ast.ListTypeDefinition, 0, '.')
 				return ret + prev
@@ -1740,7 +1741,7 @@ func (p *Parser) paragraph(data []byte) int {
 		}
 
 		// if there's a list after this, paragraph is over
-		if p.extensions&NoEmptyLineBeforeBlock != 0 {
+		if p.extensions&ext.NoEmptyLineBeforeBlock != 0 {
 			if p.uliPrefix(current) != 0 ||
 				p.oliPrefix(current) != 0 ||
 				p.quotePrefix(current) != 0 ||

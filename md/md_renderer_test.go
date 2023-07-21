@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown"
+	"github.com/integrasdl/markdown/ast"
 )
 
 func TestRenderDocument(t *testing.T) {
@@ -132,6 +132,13 @@ func TestRenderList(t *testing.T) {
 	source = []byte("* aaa\n    * aaa1\n    * aaa2\n* bbb\n* ccc\n* ddd\n")
 	input = markdown.Parse(source, nil)
 	expected = "* aaa\n    * aaa1\n    * aaa2\n* bbb\n* ccc\n* ddd\n"
+	testRendering(t, input, expected)
+}
+
+func TestRenderDefinitionList(t *testing.T) {
+	var source = []byte("Term\n: This is term definition line 1\n: This is term definition line 2\n: Line 3\n")
+	var input = markdown.Parse(source, nil)
+	var expected = "Term\n: This is term definition line 1\n: This is term definition line 2\n: Line 3\n"
 	testRendering(t, input, expected)
 }
 

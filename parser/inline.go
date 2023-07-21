@@ -5,7 +5,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 // Parsing of inline elements
@@ -71,7 +72,7 @@ func emphasis(p *Parser, data []byte, offset int) (int, ast.Node) {
 		if IsSpace(data[1]) {
 			return 0, nil
 		}
-		if p.extensions&SuperSubscript != 0 && c == '~' {
+		if p.extensions&ext.SuperSubscript != 0 && c == '~' {
 			// potential subscript, no spaces, except when escaped, helperEmphasis does
 			// not check that for us, so walk the bytes and check.
 			ret := skipUntilChar(data[1:], 0, c)
@@ -215,7 +216,7 @@ func maybeLineBreak(p *Parser, data []byte, offset int) (int, ast.Node) {
 
 // newline without two spaces works when HardLineBreak is enabled
 func lineBreak(p *Parser, data []byte, offset int) (int, ast.Node) {
-	if p.extensions&HardLineBreak != 0 {
+	if p.extensions&ext.HardLineBreak != 0 {
 		return 1, &ast.Hardbreak{}
 	}
 	return 0, nil
@@ -250,7 +251,7 @@ func maybeInlineFootnoteOrSuper(p *Parser, data []byte, offset int) (int, ast.No
 		return link(p, data, offset)
 	}
 
-	if p.extensions&SuperSubscript != 0 {
+	if p.extensions&ext.SuperSubscript != 0 {
 		ret := skipUntilChar(data[offset:], 1, '^')
 		if ret == 0 {
 			return 0, nil
@@ -279,19 +280,19 @@ func link(p *Parser, data []byte, offset int) (int, ast.Node) {
 	switch {
 	// special case: ![^text] == deferred footnote (that follows something with
 	// an exclamation point)
-	case p.extensions&Footnotes != 0 && len(data)-1 > offset && data[offset+1] == '^':
+	case p.extensions&ext.Footnotes != 0 && len(data)-1 > offset && data[offset+1] == '^':
 		t = linkDeferredFootnote
 	// ![alt] == image
 	case offset >= 0 && data[offset] == '!':
 		t = linkImg
 		offset++
 	// [@citation], [@-citation], [@?citation], [@!citation]
-	case p.extensions&Mmark != 0 && len(data)-1 > offset && data[offset+1] == '@':
+	case p.extensions&ext.Mmark != 0 && len(data)-1 > offset && data[offset+1] == '@':
 		t = linkCitation
 	// [text] == regular link
 	// ^[text] == inline footnote
 	// [^refId] == deferred footnote
-	case p.extensions&Footnotes != 0:
+	case p.extensions&ext.Footnotes != 0:
 		if offset >= 0 && data[offset] == '^' {
 			t = linkInlineFootnote
 			offset++
@@ -697,7 +698,7 @@ const (
 func leftAngle(p *Parser, data []byte, offset int) (int, ast.Node) {
 	data = data[offset:]
 
-	if p.extensions&Mmark != 0 {
+	if p.extensions&ext.Mmark != 0 {
 		id, consumed := IsCallout(data)
 		if consumed > 0 {
 			node := &ast.Callout{}
@@ -745,11 +746,11 @@ func escape(p *Parser, data []byte, offset int) (int, ast.Node) {
 		return 2, nil
 	}
 
-	if p.extensions&NonBlockingSpace != 0 && data[1] == ' ' {
+	if p.extensions&ext.NonBlockingSpace != 0 && data[1] == ' ' {
 		return 2, &ast.NonBlockingSpace{}
 	}
 
-	if p.extensions&BackslashLineBreak != 0 && data[1] == '\n' {
+	if p.extensions&ext.BackslashLineBreak != 0 && data[1] == '\n' {
 		return 2, &ast.Hardbreak{}
 	}
 
@@ -1207,7 +1208,7 @@ func helperEmphasis(p *Parser, data []byte, c byte) (int, ast.Node) {
 
 		if data[i] == c && !IsSpace(data[i-1]) {
 
-			if p.extensions&NoIntraEmphasis != 0 {
+			if p.extensions&ext.NoIntraEmphasis != 0 {
 				if !(i+1 == len(data) || IsSpace(data[i+1]) || IsPunctuation(data[i+1])) {
 					continue
 				}

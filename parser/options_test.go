@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
 )
 
 type CustomNode struct {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/gomarkdown/markdown/parser"
+	"github.com/integrasdl/markdown/parser"
 )
 
 // SmartyPants rendering

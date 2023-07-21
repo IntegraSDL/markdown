@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gomarkdown/markdown"
-	"github.com/gomarkdown/markdown/ast"
-	mdhtml "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
+	"github.com/integrasdl/markdown"
+	"github.com/integrasdl/markdown/ast"
+	mdhtml "github.com/integrasdl/markdown/html"
+	"github.com/integrasdl/markdown/parser"
 )
 
 // This prints AST of parsed markdown document.

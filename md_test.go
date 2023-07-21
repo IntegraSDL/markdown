@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/gomarkdown/markdown/ast"
-	"github.com/gomarkdown/markdown/md"
-	"github.com/gomarkdown/markdown/parser"
+	"github.com/integrasdl/markdown/ast"
+	"github.com/integrasdl/markdown/md"
+	"github.com/integrasdl/markdown/parser"
 )
 
 func TestMd(t *testing.T) {

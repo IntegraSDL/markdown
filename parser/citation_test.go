@@ -3,14 +3,15 @@ package parser
 import (
 	"testing"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 func TestCitation(t *testing.T) {
 	data := []byte(`[@!RFC1035]`)
 
 	p := New()
-	p.extensions |= Mmark
+	p.extensions |= ext.Mmark
 
 	_, node := citation(p, data, 0)
 	dest := string(node.(*ast.Citation).Destination[0])
@@ -27,7 +28,7 @@ func TestCitationSuffix(t *testing.T) {
 	data := []byte(`[@!RFC1035, p. 144]`)
 
 	p := New()
-	p.extensions |= Mmark
+	p.extensions |= ext.Mmark
 
 	_, node := citation(p, data, 0)
 	if dest := string(node.(*ast.Citation).Destination[0]); dest != "RFC1035" {
@@ -47,7 +48,7 @@ func TestCitationSuffixMultiple(t *testing.T) {
 	data := []byte(`[@?RFC1034; @!RFC1035, p. 144, more]`)
 
 	p := New()
-	p.extensions |= Mmark
+	p.extensions |= ext.Mmark
 
 	_, node := citation(p, data, 0)
 	if dest := string(node.(*ast.Citation).Destination[0]); dest != "RFC1034" {

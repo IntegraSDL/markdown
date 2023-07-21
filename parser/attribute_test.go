@@ -5,11 +5,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 func TestBlockAttribute(t *testing.T) {
-	p := NewWithExtensions(CommonExtensions | Attributes)
+	p := NewWithExtensions(ext.CommonExtensions | ext.Attributes)
 	tests := []struct {
 		data []byte
 		attr *ast.Attribute

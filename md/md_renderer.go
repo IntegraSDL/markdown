@@ -6,7 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 // Renderer renders to markdown. Allows to convert to a canonnical
@@ -21,6 +22,7 @@ type Renderer struct {
 	listDepth      int
 	indentSize     int
 	lastNormalText string
+	extensions     ext.Extensions
 }
 
 // NewRenderer returns a Markdown renderer.
@@ -29,9 +31,18 @@ func NewRenderer() *Renderer {
 		orderedListCounter: map[int]int{},
 		paragraph:          map[int]bool{},
 		indentSize:         4,
+		extensions:         ext.CommonExtensions,
 	}
 }
 
+func NewRendererWithExtensions(extensions ext.Extensions) *Renderer {
+	return &Renderer{
+		orderedListCounter: map[int]int{},
+		paragraph:          map[int]bool{},
+		indentSize:         4,
+		extensions:         extensions,
+	}
+}
 func (r *Renderer) out(w io.Writer, d []byte) {
 	r.lastOutputLen = len(d)
 	w.Write(d)
@@ -64,7 +75,14 @@ func (r *Renderer) list(w io.Writer, node *ast.List, entering bool) {
 func (r *Renderer) listItem(w io.Writer, node *ast.ListItem, entering bool) {
 	flags := node.ListFlags
 	bullet := string(node.BulletChar)
-
+	if r.extensions&ext.DefinitionLists != 0 {
+		if flags&ast.ListTypeDefinition > 0 {
+			bullet = string(':')
+		}
+		if flags&ast.ListTypeTerm > 0 {
+			bullet = ``
+		}
+	}
 	if entering {
 		for i := 1; i < r.listDepth; i++ {
 			for i := 0; i < r.indentSize; i++ {
@@ -74,7 +92,7 @@ func (r *Renderer) listItem(w io.Writer, node *ast.ListItem, entering bool) {
 		if flags&ast.ListTypeOrdered != 0 {
 			fmt.Fprintf(w, "%d. ", r.orderedListCounter[r.listDepth])
 			r.orderedListCounter[r.listDepth]++
-		} else {
+		} else if (flags&ast.ListTypeTerm == 0) && (r.extensions&ext.DefinitionLists != 0) {
 			fmt.Fprintf(w, "%s ", bullet)
 		}
 	}

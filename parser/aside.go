@@ -3,7 +3,8 @@ package parser
 import (
 	"bytes"
 
-	"github.com/gomarkdown/markdown/ast"
+	"github.com/integrasdl/markdown/ast"
+	ext "github.com/integrasdl/markdown/extensions"
 )
 
 // returns aisde prefix length
@@ -45,7 +46,7 @@ func (p *Parser) aside(data []byte) int {
 		// fenced code and if one's found, incorporate it altogether,
 		// irregardless of any contents inside it
 		for end < len(data) && data[end] != '\n' {
-			if p.extensions&FencedCode != 0 {
+			if p.extensions&ext.FencedCode != 0 {
 				if i := p.fencedCodeBlock(data[end:], false); i > 0 {
 					// -1 to compensate for the extra end++ after the loop:
 					end += i - 1
